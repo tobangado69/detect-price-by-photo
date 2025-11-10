@@ -1,0 +1,45 @@
+---
+description: Tech Debt Identification, Refactoring, and Prevention Guidelines
+globs:
+  - "**/src/**"
+  - "**/app/**"
+  - "**/lib/**"
+  - "**/services/**"
+  - "**/controllers/**"
+  - "**/api/**"
+  - "**/domain/**"
+  - "**/models/**"
+  - "**/repositories/**"
+  - "**/db/**"
+  - "**/tests/**"
+  - "**/docs/**"
+---
+
+# Tech Debt Guardrails
+
+## 🚨 Identifying Tech Debt
+
+- **Definition & Impact**: Treat technical debt as deliberate or accidental shortcuts that slow delivery, inflate maintenance cost, and risk regressions.
+- **Code Smells & Antipatterns**: Watch for duplicated logic, long functions, God objects, tight coupling, magic values, and dead code.
+- **Performance Bottlenecks**: Profile slow endpoints, excessive allocations, N+1 queries, blocking I/O, and unbounded loops.
+- **Security Vulnerabilities**: Audit for unsanitized inputs, missing auth checks, insecure defaults, and outdated dependencies.
+- **Documentation & Tests**: Flag missing READMEs, outdated diagrams, and absent or flaky automated test coverage.
+
+## 🔧 Refactoring Strategies
+
+- **Safe Techniques**: Apply small, reversible steps; keep behavior identical; lean on feature flags or branch-by-abstraction when risk is high.
+- **Structure Improvements**: Enforce single responsibility, clarify module boundaries, and remove duplication with purposeful abstractions.
+- **Separation of Concerns**: Move business rules out of UI layers; isolate data access, presentation, and orchestration logic.
+- **Database Optimization**: Normalize where needed, add indexes thoughtfully, and script migrations with rollback paths.
+- **API Design**: Version breaking changes, honor contracts, improve consistency, and document request/response shapes.
+- **Performance Tuning**: Measure first, optimize hotspots, cache intentionally, stream large payloads, and remove unnecessary work.
+
+## ✅ Prevention Best Practices
+
+- **Clean Code Principles**: Prefer expressive naming, small functions, and predictable control flow; delete unused code quickly.
+- **Code Review Discipline**: Require peer review, highlight debt indicators, and reject changes that increase entropy without rationale.
+- **Automated Testing**: Maintain fast unit suites, smoke tests, contract tests, and regression checks in CI.
+- **Documentation Standards**: Keep architecture notes, runbooks, and API references current with every meaningful change.
+- **Continuous Improvement Culture**: Allocate time for remediation, track debt items, celebrate debt payoff in retros.
+- **Scope Restraint**: When fixing bugs or adding new features, avoid modifying unrelated code—change only what is necessary and directly tied to the work.
+

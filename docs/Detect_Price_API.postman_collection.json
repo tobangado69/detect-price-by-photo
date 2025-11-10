@@ -1,0 +1,1224 @@
+{
+	"info": {
+		"name": "Detect Price by Photo API",
+		"description": "API documentation for Detect Price by Photo backend service",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "detect-price-api"
+	},
+	"item": [
+		{
+			"name": "General",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/healthz",
+							"host": ["{{base_url}}"],
+							"path": ["healthz"]
+						}
+					}
+				},
+				{
+					"name": "OpenAPI Spec",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/openapi.json",
+							"host": ["{{base_url}}"],
+							"path": ["api", "openapi.json"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Sign In with Email",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const jsonData = pm.response.json();",
+									"    pm.environment.set('access_token', jsonData.access_token);",
+									"    pm.environment.set('refresh_token', jsonData.refresh_token);",
+									"    pm.environment.set('user_id', jsonData.user.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"securePassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/signin/email",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "signin", "email"]
+						}
+					}
+				},
+				{
+					"name": "Sign In with Username",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"johndoe\",\n  \"password\": \"securePassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/signin/username",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "signin", "username"]
+						}
+					}
+				},
+				{
+					"name": "Forgot Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"user@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/forgot-password",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "forgot-password"]
+						}
+					}
+				},
+				{
+					"name": "Reset Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"token\": \"reset_token_from_email\",\n  \"new_password\": \"newSecurePassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/reset-password",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "reset-password"]
+						}
+					}
+				},
+				{
+					"name": "Verify Email (Link)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/verify-email?token=verification_token",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "verify-email"],
+							"query": [
+								{
+									"key": "token",
+									"value": "verification_token"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Initiate Email Verification",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"user@example.com\",\n  \"redirect_to\": \"https://app.example.com/dashboard\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/verification/email/initiate",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "verification", "email", "initiate"]
+						}
+					}
+				},
+				{
+					"name": "Validate Email Verification",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"token\": \"verification_token\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/verification/email/validate",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "verification", "email", "validate"]
+						}
+					}
+				},
+				{
+					"name": "Create Refresh Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"session_id\": \"uuid\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/refresh-token",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "refresh-token"]
+						}
+					}
+				},
+				{
+					"name": "Update Refresh Token",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"token_id\": \"uuid\",\n  \"expires_at\": \"2024-01-22T10:30:00Z\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/refresh-token",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "refresh-token"]
+						}
+					}
+				},
+				{
+					"name": "Get Refresh Token",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/refresh-token/:tokenId",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "refresh-token", ":tokenId"],
+							"variable": [
+								{
+									"key": "tokenId",
+									"value": "uuid"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Refresh Token",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/refresh-token/:tokenId",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "refresh-token", ":tokenId"],
+							"variable": [
+								{
+									"key": "tokenId",
+									"value": "uuid"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Set User Password",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"user_id\": \"{{user_id}}\",\n  \"password\": \"newPassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/password",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "password"]
+						}
+					}
+				},
+				{
+					"name": "Update User Password",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"current_password\": \"oldPassword123\",\n  \"new_password\": \"newPassword123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/password/:userId",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "password", ":userId"],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{user_id}}"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Create User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"newuser@example.com\",\n  \"display_name\": \"Jane Doe\",\n  \"username\": \"janedoe\",\n  \"phone\": \"+6281234567890\",\n  \"metadata\": {\n    \"timezone\": \"Asia/Jakarta\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/users",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users"]
+						}
+					}
+				},
+				{
+					"name": "List Users",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/users?page=1&limit=20&search=&role=",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								},
+								{
+									"key": "search",
+									"value": ""
+								},
+								{
+									"key": "role",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/users/:userId",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users", ":userId"],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{user_id}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"display_name\": \"John Updated\",\n  \"phone\": \"+6281234567890\",\n  \"avatar_url\": \"https://example.com/avatar.jpg\",\n  \"metadata\": {\n    \"timezone\": \"Asia/Jakarta\",\n    \"company_name\": \"Acme Corp\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/users/:userId",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users", ":userId"],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{user_id}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/users/:userId",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users", ":userId"],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{user_id}}"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Subscriptions",
+			"item": [
+				{
+					"name": "List Plans",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/subscriptions/plans",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "subscriptions", "plans"]
+						}
+					}
+				},
+				{
+					"name": "Get Current Subscription",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/subscriptions/current",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "subscriptions", "current"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Photo Analysis",
+			"item": [
+				{
+					"name": "Upload Photo",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "photo",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "product_name",
+									"value": "iPhone 13 Pro Max",
+									"type": "text"
+								},
+								{
+									"key": "condition",
+									"value": "good",
+									"type": "text",
+									"description": "new, like_new, good, fair, poor"
+								},
+								{
+									"key": "mode",
+									"value": "fast",
+									"type": "text",
+									"description": "fast, accurate, knowledge_based"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/analyses/upload",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "analyses", "upload"]
+						}
+					}
+				},
+				{
+					"name": "Trigger Price Estimation",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/analyses/:id/estimate",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "analyses", ":id", "estimate"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "analysis_uuid"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "List User Analyses",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/analyses/history?page=1&limit=20",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "analyses", "history"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Analysis Details",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/analyses/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "analyses", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "analysis_uuid"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Analysis",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/analyses/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "analyses", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "analysis_uuid"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Payments",
+			"item": [
+				{
+					"name": "Create Subscription Payment",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"plan_id\": \"plan_uuid\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/subscriptions/subscribe",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "subscriptions", "subscribe"]
+						}
+					}
+				},
+				{
+					"name": "List User Invoices",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/invoices?page=1&limit=20&status=",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "invoices"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								},
+								{
+									"key": "status",
+									"value": ""
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Payment Webhook",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"transaction_status\": \"settlement\",\n  \"order_id\": \"order_id\",\n  \"signature_key\": \"signature\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/payments/webhook",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "payments", "webhook"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "User Management",
+					"item": [
+						{
+							"name": "List Users (Admin)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{admin_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/users?page=1&limit=20",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "users"],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "limit",
+											"value": "20"
+										}
+									]
+								}
+							}
+						},
+						{
+							"name": "Get User (Admin)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{admin_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/users/:id",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "users", ":id"],
+									"variable": [
+										{
+											"key": "id",
+											"value": "user_uuid"
+										}
+									]
+								}
+							}
+						},
+						{
+							"name": "Update User (Admin)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{admin_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"role\": \"admin\",\n  \"display_name\": \"Updated Name\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/users/:id",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "users", ":id"],
+									"variable": [
+										{
+											"key": "id",
+											"value": "user_uuid"
+										}
+									]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Analytics",
+					"item": [
+						{
+							"name": "Get Dashboard Metrics",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{admin_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/analytics/dashboard",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "analytics", "dashboard"]
+								}
+							}
+						},
+						{
+							"name": "Get Revenue Metrics",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{admin_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/analytics/revenue?period=monthly",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "analytics", "revenue"],
+									"query": [
+										{
+											"key": "period",
+											"value": "monthly"
+										}
+									]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Plan Management",
+					"item": [
+						{
+							"name": "List Plans (Admin)",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{admin_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/plans",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "plans"]
+								}
+							}
+						},
+						{
+							"name": "Create Plan",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{admin_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"starter\",\n  \"display_name\": \"Starter Plan\",\n  \"daily_photo_limit\": 50,\n  \"price_idr\": 30000,\n  \"price_usd\": 2.00,\n  \"description\": \"For small sellers\",\n  \"features\": [\"50 daily analyses\", \"30-day history\"],\n  \"is_active\": true\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/plans",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "plans"]
+								}
+							}
+						},
+						{
+							"name": "Update Plan",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{admin_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"price_idr\": 70000,\n  \"is_active\": true\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/plans/:id",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "plans", ":id"],
+									"variable": [
+										{
+											"key": "id",
+											"value": "plan_uuid"
+										}
+									]
+								}
+							}
+						},
+						{
+							"name": "Delete Plan",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{admin_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/plans/:id",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "plans", ":id"],
+									"variable": [
+										{
+											"key": "id",
+											"value": "plan_uuid"
+										}
+									]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "AI Model Management",
+					"item": [
+						{
+							"name": "List AI Models",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{admin_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/models",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "models"]
+								}
+							}
+						},
+						{
+							"name": "Set Default Model",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{admin_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"model_id\": \"anthropic/claude-3-5-haiku\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/models/default",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "models", "default"]
+								}
+							}
+						},
+						{
+							"name": "Update Model Configuration",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{admin_access_token}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"display_name\": \"GPT-4o Mini Updated\",\n  \"modes_supported\": [\"fast\", \"accurate\", \"knowledge_based\"],\n  \"fallback_chain\": [\"anthropic/claude-3-5-haiku\"],\n  \"status\": \"active\",\n  \"max_tokens\": 8000,\n  \"temperature\": 0.8\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/admin/models/:id",
+									"host": ["{{base_url}}"],
+									"path": ["api", "v1", "admin", "models", ":id"],
+									"variable": [
+										{
+											"key": "id",
+											"value": "openai/gpt-4o-mini"
+										}
+									]
+								}
+							}
+						}
+					]
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "admin_access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
+

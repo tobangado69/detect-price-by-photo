@@ -1,0 +1,1 @@
+// Shared TypeScript interfaces across frontend clients.

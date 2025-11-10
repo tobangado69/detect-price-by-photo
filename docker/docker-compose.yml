@@ -1,0 +1,75 @@
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/backend.Dockerfile
+    env_file:
+      - ./.env.dev
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
+      - REDIS_URL=${REDIS_URL}
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_started
+    ports:
+      - '8080:8000'
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/frontend.Dockerfile
+    environment:
+      - VITE_API_URL=http://localhost:8080
+    depends_on:
+      - backend
+    ports:
+      - '5173:4173'
+
+  db:
+    image: pgvector/pgvector:pg16
+    env_file:
+      - ./.env.dev
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  cache:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    ports:
+      - '6379:6379'
+
+  pgweb:
+    image: sosedoff/pgweb:latest
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ./.env.dev
+    environment:
+      PGWEB_DATABASE_URL: postgres://postgres:postgres@db:5432/detect_price?sslmode=disable
+      PGWEB_PORT: ${PGWEB_PORT:-8081}
+    command: ["pgweb", "--bind=0.0.0.0", "--listen=${PGWEB_PORT:-8081}"]
+    ports:
+      - "${PGWEB_PORT:-8081}:${PGWEB_PORT:-8081}"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:${PGWEB_PORT:-8081}/"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
+  redis_data:

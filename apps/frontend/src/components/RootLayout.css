@@ -1,0 +1,30 @@
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: #0b1526;
+  color: #fff;
+}
+
+.app-header nav {
+  display: flex;
+  gap: 1rem;
+}
+
+.app-header a {
+  color: #a7d3ff;
+  text-decoration: none;
+}
+
+.app-main {
+  flex: 1;
+  padding: 2rem;
+  background: #f5f8fc;
+}

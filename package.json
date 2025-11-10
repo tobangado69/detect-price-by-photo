@@ -1,0 +1,31 @@
+{
+    "name": "detect-price-by-photo",
+    "version": "0.0.0",
+    "private": true,
+    "scripts": {
+        "lint": "biome lint .",
+        "format": "biome format . --write",
+        "dev:backend": "cd apps/backend && go run ./cmd/ -- serve",
+        "dev:frontend": "pnpm --filter frontend dev",
+        "test:backend": "cd apps/backend && go test ./...",
+        "build:frontend": "pnpm --filter frontend build",
+        "compose:up": "docker compose -f docker/docker-compose.yml up -d --remove-orphans",
+        "compose:down": "docker compose -f docker/docker-compose.yml down --remove-orphans",
+        "compose:reset": "docker compose -f docker/docker-compose.yml down --remove-orphans --volumes",
+        "deps:update": "npm-check-updates --configFileName .ncurc.json"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "catalog:",
+        "npm-check-updates": "catalog:"
+    },
+    "pnpm": {
+        "onlyBuiltDependencies": [
+            "@biomejs/biome",
+            "@swc/core",
+            "core-js-pure",
+            "esbuild",
+            "sharp"
+        ]
+    },
+    "packageManager": "pnpm@10.18.0"
+}

@@ -1,0 +1,1 @@
+// Utility helpers reused across frontend clients.
