@@ -67,6 +67,7 @@ func (s *HTTPServer) registerModules(cfg *config.Config, pg *adapter.PostgresDB,
 
 	// Inject auth middleware into user module so protected user routes use same JWT config
 	userModule.Use(authModule.JWTMiddleware())
+	userModule.Use(modAdmin.RequireAdmin(userModule.GetUserRepository()))
 
 	// Register the module routes after injecting middleware
 	userModule.RegisterRoutes(apiV1Route)

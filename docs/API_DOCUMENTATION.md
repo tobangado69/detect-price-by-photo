@@ -324,7 +324,7 @@ Set password for authenticated user.
 
 **Headers:**
 ```
-Authorization: Bearer <access_token>
+Authorization: Bearer <admin_access_token>
 ```
 
 **Request Body:**
@@ -343,7 +343,7 @@ Update password for user (requires current password).
 
 **Headers:**
 ```
-Authorization: Bearer <access_token>
+Authorization: Bearer <admin_access_token>
 ```
 
 **Path Parameters:**
@@ -365,7 +365,7 @@ Create a new user session.
 
 **Headers:**
 ```
-Authorization: Bearer <access_token>
+Authorization: Bearer <admin_access_token>
 ```
 
 **Request Body:**
@@ -386,7 +386,7 @@ Update an existing session.
 
 **Headers:**
 ```
-Authorization: Bearer <access_token>
+Authorization: Bearer <admin_access_token>
 ```
 
 **Request Body:**
