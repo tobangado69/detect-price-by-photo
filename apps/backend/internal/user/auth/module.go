@@ -108,6 +108,7 @@ func NewModule(opts *Options) *AuthModule {
 		SigningAlg:         opts.SigningAlg,
 		Mailer:             opts.Mailer,
 		BaseURL:            opts.BaseURL,
+		Logger:             logger,
 	})
 
 	h := handler.NewHandler(&handler.HandlerOpts{
@@ -138,6 +139,7 @@ func (m *AuthModule) JWTMiddleware() echo.MiddlewareFunc {
 func (m *AuthModule) RegisterRoutes(e *echo.Group) {
 	// Public routes (no access token required)
 	publicGroup := e.Group("/auth", m.middlewares...)
+	publicGroup.POST("/signup", m.handler.SignUp)
 	publicGroup.POST("/signin/email", m.handler.SignInWithEmail)
 	publicGroup.POST("/signin/username", m.handler.SignInWithUsername)
 	publicGroup.GET("/verify-email", m.handler.ValidateEmailVerificationByLink)

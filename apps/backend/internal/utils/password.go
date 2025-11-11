@@ -39,6 +39,7 @@ import (
 	"strings"
 
 	"golang.org/x/crypto/argon2"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Argon2Params holds the parameters for argon2id hashing
@@ -93,11 +94,30 @@ func (h *PasswordHasher) Hash(password string) (string, error) {
 	return phc, nil
 }
 
-// Validate compares a plain password with a PHC argon2id hash
+// Validate compares a plain password with a hash (supports both Argon2 and bcrypt)
 func (h *PasswordHasher) Validate(password, hash string) (bool, error) {
+	// Trim any whitespace that might have been introduced
+	hash = strings.TrimSpace(hash)
+	
+	// Detect hash format by checking the prefix
+	if strings.HasPrefix(hash, "$argon2id$") {
+		return h.validateArgon2(password, hash)
+	} else if strings.HasPrefix(hash, "$2a$") || strings.HasPrefix(hash, "$2b$") || strings.HasPrefix(hash, "$2y$") {
+		return h.validateBcrypt(password, hash)
+	}
+	
+	// Provide more detailed error message
+	if len(hash) < 10 {
+		return false, fmt.Errorf("invalid hash format: hash too short (length: %d)", len(hash))
+	}
+	return false, fmt.Errorf("invalid hash format: unknown hash type (prefix: %s)", hash[:min(20, len(hash))])
+}
+
+// validateArgon2 validates an Argon2 PHC hash
+func (h *PasswordHasher) validateArgon2(password, hash string) (bool, error) {
 	parts := strings.Split(hash, "$")
 	if len(parts) != 6 {
-		return false, errors.New("invalid hash format")
+		return false, errors.New("invalid argon2 hash format")
 	}
 
 	var memory uint32
@@ -122,6 +142,18 @@ func (h *PasswordHasher) Validate(password, hash string) (bool, error) {
 	computedHash := argon2.IDKey([]byte(password), salt, iterations, memory, parallelism, keyLen)
 
 	return subtleCompare(computedHash, expectedHash), nil
+}
+
+// validateBcrypt validates a bcrypt hash
+func (h *PasswordHasher) validateBcrypt(password, hash string) (bool, error) {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	if err != nil {
+		if err == bcrypt.ErrMismatchedHashAndPassword {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }
 
 // subtleCompare does a constant-time comparison of two byte slices

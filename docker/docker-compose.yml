@@ -8,6 +8,13 @@ services:
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
       - REDIS_URL=${REDIS_URL}
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+      - SMTP_USERNAME=
+      - SMTP_PASSWORD=
+      - SMTP_SENDER_NAME=Detect Price by Photo
+      - SMTP_SENDER_EMAIL=noreply@detectprice.local
+    command: ["serve"]
     depends_on:
       db:
         condition: service_healthy
@@ -50,6 +57,14 @@ services:
       - redis_data:/data
     ports:
       - '6379:6379'
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - '1025:1025'  # SMTP server
+      - '8025:8025'  # Web UI
+    logging:
+      driver: 'none'  # Disable verbose logging
 
   pgweb:
     image: sosedoff/pgweb:latest

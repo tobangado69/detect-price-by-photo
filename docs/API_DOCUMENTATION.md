@@ -1,8 +1,10 @@
 # Detect Price by Photo - API Documentation
 
-**Base URL:** `http://localhost:8000` (development)  
+**Base URL:** `http://localhost:8080` (development - Docker port mapping)  
 **API Version:** v1  
 **Base Path:** `/api/v1`
+
+> **Note:** The backend runs on port 8000 inside Docker, but is exposed on port 8080 on the host machine.
 
 ## Table of Contents
 
@@ -67,11 +69,49 @@ Serve uploaded files from local storage (development only).
 
 **Example:** `GET /files/uploads/2024/01/15/abc123.jpg`
 
+**Note:** In production, files should be served via S3/CDN, not through the API server.
+
 ---
 
 ## Authentication
 
 ### Public Endpoints
+
+#### Sign Up
+
+**POST** `/api/v1/auth/signup`
+
+Register a new user account. No authentication required.
+
+**Request Body:**
+```json
+{
+  "display_name": "John Doe",
+  "email": "user@example.com",
+  "password": "StrongPassword123",
+  "password_confirmation": "StrongPassword123",
+  "redirect_to": "https://app.example.com/welcome"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Account created successfully. Please verify your email address.",
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "display_name": "John Doe",
+    "username": "user",
+    "role": "user"
+  }
+}
+```
+
+**Notes:**
+- `display_name` is optional; if omitted, it is derived from the email.
+- A verification email is sent automatically (if SMTP is configured).
+- Password must be at least 12 characters and match `password_confirmation`.
 
 #### Sign In with Email
 
@@ -82,8 +122,8 @@ Authenticate user with email and password.
 **Request Body:**
 ```json
 {
-  "email": "user@example.com",
-  "password": "securePassword123"
+  "email": "admin@detectprice.com",
+  "password": "admin123"
 }
 ```
 
@@ -92,14 +132,26 @@ Authenticate user with email and password.
 {
   "user": {
     "id": "uuid",
-    "email": "user@example.com",
-    "display_name": "John Doe"
+    "email": "admin@detectprice.com",
+    "display_name": "System Administrator"
   },
   "access_token": "jwt_access_token",
   "refresh_token": "jwt_refresh_token",
   "token_expiry": "2024-01-15T10:30:00Z"
 }
 ```
+
+**Status Codes:**
+- `200 OK`: Authenticated successfully
+- `401 Unauthorized`: Invalid credentials or email not verified
+- `403 Forbidden`: Account suspended (see `ban_reason` in admin panel)
+- `500 Internal Server Error`: Unexpected failure
+
+**Status Codes:**
+- `200 OK`: Authenticated successfully
+- `401 Unauthorized`: Invalid credentials or email not verified
+- `403 Forbidden`: Account suspended
+- `500 Internal Server Error`: Unexpected failure
 
 #### Sign In with Username
 
@@ -110,8 +162,8 @@ Authenticate user with username and password.
 **Request Body:**
 ```json
 {
-  "username": "johndoe",
-  "password": "securePassword123"
+  "username": "admin",
+  "password": "admin123"
 }
 ```
 
@@ -126,7 +178,7 @@ Initiate password reset flow. Sends reset token to email.
 **Request Body:**
 ```json
 {
-  "email": "user@example.com"
+  "email": "admin@detectprice.com"
 }
 ```
 
@@ -151,12 +203,27 @@ Reset password using token from email.
 }
 ```
 
-**Response:**
+**Validation:**
+- `token` (required): Password reset token from email
+- `new_password` (required, min: 12 characters): New password
+
+**Response (Success):**
 ```json
 {
   "message": "Password has been reset successfully. You can now log in with your new password."
 }
 ```
+
+**Response (Error):**
+```json
+{
+  "error": "Invalid or expired token"
+}
+```
+
+**Status Codes:**
+- `200 OK`: Password reset successful
+- `400 Bad Request`: Invalid token or validation error
 
 #### Verify Email (Link)
 
@@ -183,7 +250,7 @@ Request email verification token.
 **Request Body:**
 ```json
 {
-  "email": "user@example.com",
+  "email": "admin@detectprice.com",
   "redirect_to": "https://app.example.com/dashboard" // optional
 }
 ```
@@ -362,7 +429,7 @@ Authorization: Bearer <access_token>
 
 **POST** `/api/v1/auth/verification/email/revoke`
 
-Revoke email verification token.
+Revoke email verification token (protected endpoint).
 
 **Headers:**
 ```
@@ -376,11 +443,18 @@ Authorization: Bearer <access_token>
 }
 ```
 
+**Response:**
+```json
+{
+  "message": "Verification token revoked"
+}
+```
+
 #### Resend Email Verification
 
 **POST** `/api/v1/auth/verification/email/resend`
 
-Resend email verification.
+Resend email verification (protected endpoint).
 
 **Headers:**
 ```
@@ -390,22 +464,35 @@ Authorization: Bearer <access_token>
 **Request Body:**
 ```json
 {
-  "email": "user@example.com",
+  "email": "admin@detectprice.com",
   "redirect_to": "https://app.example.com/dashboard" // optional
 }
 ```
+
+**Response:**
+```json
+{
+  "message": "Verification email resent if the email is registered"
+}
+```
+
+**Status Codes:**
+- `200 OK`: Email sent successfully
+- `400 Bad Request`: Validation error
+- `404 Not Found`: User not found
+- `409 Conflict`: Token still valid (check email)
 
 ---
 
 ## User Management
 
-All endpoints require JWT authentication.
+All endpoints require JWT authentication and are intended for authenticated/admin usage. Public self-service registration should use **POST `/api/v1/auth/signup`**.
 
 ### Create User
 
-**POST** `/api/v1/users`
+**POST** `/api/v1/users` *(Authenticated/Admin)*
 
-Create a new user account.
+Create a new user account via the administrative API. Useful for back-office tooling.
 
 **Headers:**
 ```
@@ -417,8 +504,7 @@ Authorization: Bearer <access_token>
 {
   "email": "newuser@example.com",
   "display_name": "Jane Doe",
-  "username": "janedoe", // optional, auto-generated if not provided
-  "phone": "+6281234567890", // optional
+  "username": "janedoe",
   "metadata": {
     "timezone": "Asia/Jakarta"
   }
@@ -804,9 +890,16 @@ Authorization: Bearer <access_token>
   "redirect_url": "https://app.sandbox.midtrans.com/snap/v2/vtweb/...",
   "transaction_id": "midtrans_transaction_id",
   "invoice_id": "uuid",
-  "due_at": "2024-01-22T10:30:00Z"
+  "amount_idr": 65000,
+  "amount_usd": 4.50
 }
 ```
+
+**Status Codes:**
+- `200 OK`: Payment transaction created successfully
+- `400 Bad Request`: Invalid plan ID or validation error
+- `401 Unauthorized`: Authentication required
+- `500 Internal Server Error`: Payment gateway error
 
 ### List User Invoices (Protected)
 
@@ -875,7 +968,7 @@ All admin endpoints require:
 
 **GET** `/api/v1/admin/users`
 
-List all users with admin filters.
+List all users with admin filters and pagination.
 
 **Headers:**
 ```
@@ -883,19 +976,41 @@ Authorization: Bearer <admin_access_token>
 ```
 
 **Query Parameters:**
-- `page` (optional): Page number
-- `limit` (optional): Items per page
-- `search` (optional): Search by email/name
-- `role` (optional): Filter by role
-- `status` (optional): Filter by status
+- `search` (optional): Search by email or display name
+- `limit` (optional): Items per page (default: 50, max: 100)
+- `offset` (optional): Offset for pagination (default: 0)
 
-**Response:** Same as regular user list endpoint
+**Response:**
+```json
+{
+  "users": [
+    {
+      "id": "uuid",
+      "email": "admin@detectprice.com",
+      "display_name": "John Doe",
+      "username": "johndoe",
+      "role": "user",
+      "created_at": "2024-01-15T10:30:00Z",
+      "email_verified_at": "2024-01-15T11:00:00Z"
+    }
+  ],
+  "total": 1250,
+  "limit": 50,
+  "offset": 0
+}
+```
+
+**Status Codes:**
+- `200 OK`: Users retrieved successfully
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Admin access required
+- `500 Internal Server Error`: Failed to retrieve users
 
 #### Get User (Admin)
 
 **GET** `/api/v1/admin/users/:id`
 
-Get user details (admin view).
+Get user details (admin view with full information).
 
 **Headers:**
 ```
@@ -903,15 +1018,43 @@ Authorization: Bearer <admin_access_token>
 ```
 
 **Path Parameters:**
-- `id` (required): User ID
+- `id` (required): User ID (UUID)
 
-**Response:** User object with full details
+**Response:**
+```json
+{
+  "id": "uuid",
+  "email": "admin@detectprice.com",
+  "display_name": "John Doe",
+  "username": "johndoe",
+  "role": "user",
+  "avatar_url": null,
+  "metadata": {
+    "timezone": "Asia/Jakarta"
+  },
+  "created_at": "2024-01-15T10:30:00Z",
+  "updated_at": null,
+  "email_verified_at": "2024-01-15T11:00:00Z",
+  "last_login_at": "2024-01-20T08:00:00Z",
+  "banned_at": null,
+  "ban_expires": null,
+  "ban_reason": null
+}
+```
+
+**Status Codes:**
+- `200 OK`: User retrieved successfully
+- `400 Bad Request`: Invalid user ID format
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Admin access required
+- `404 Not Found`: User not found
+- `500 Internal Server Error`: Failed to retrieve user
 
 #### Update User (Admin)
 
 **PUT** `/api/v1/admin/users/:id`
 
-Update user (admin can change role, status, etc.).
+Update user information. Admin can change role, plan, and account suspension state. All changes are logged in audit logs.
 
 **Headers:**
 ```
@@ -919,20 +1062,45 @@ Authorization: Bearer <admin_access_token>
 ```
 
 **Path Parameters:**
-- `id` (required): User ID
+- `id` (required): User ID (UUID)
 
 **Request Body:**
 ```json
 {
-  "role": "admin", // Can change role
-  "display_name": "Updated Name",
-  "metadata": {
-    "banned": false
-  }
+  "role": "admin",
+  "status": "suspended",
+  "ban_reason": "Fraudulent activity detected",
+  "ban_expires": "2025-01-31T23:59:59Z"
 }
 ```
 
-**Response:** Updated user object
+**Status Behaviour**
+- `status: "suspended"` requires a non-empty `ban_reason`. Optionally provide `ban_expires` (RFC3339) to auto-lift the ban.
+- `status: "active"` clears any existing ban (`banned_at`, `ban_expires`, `ban_reason`).
+- When a ban expires naturally, the next login attempt automatically clears the ban and proceeds if credentials are valid.
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "email": "admin@detectprice.com",
+  "display_name": "John Doe",
+  "username": "johndoe",
+  "role": "admin",
+  "created_at": "2024-01-15T10:30:00Z",
+  "updated_at": "2024-01-20T12:00:00Z"
+}
+```
+
+**Status Codes:**
+- `200 OK`: User updated successfully
+- `400 Bad Request`: Invalid user ID or request body (e.g., invalid role)
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Admin access required
+- `404 Not Found`: User not found
+- `500 Internal Server Error`: Failed to update user
+
+**Note:** All admin actions are automatically logged in the audit log system for accountability.
 
 ### Analytics
 
@@ -956,21 +1124,25 @@ Authorization: Bearer <admin_access_token>
     "premium": 400,
     "enterprise": 50
   },
-  "mrr_idr": 52500000,
-  "mrr_trend": "+12%",
-  "daily_active_users": 1500,
+  "mrr": 52500000.0,
+  "daily_active_users": 150,
   "total_analyses": 10000,
-  "avg_response_time_ms": 1850,
-  "error_rate": "0.02%",
-  "total_revenue_idr": 120000000,
-  "total_revenue_usd": 8000,
-  "total_payments": 250,
-  "successful_payments": 245,
-  "failed_payments": 5,
-  "avg_order_value_idr": 489795.92,
-  "avg_order_value_usd": 32.65
+  "analyses_today": 245,
+  "average_latency_ms": 1850.5,
+  "error_rate": 0.02
 }
 ```
+
+**Status Codes:**
+- `200 OK`: Dashboard metrics retrieved successfully
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Admin access required
+- `500 Internal Server Error`: Failed to retrieve metrics
+
+**Note:** 
+- `mrr` is Monthly Recurring Revenue in IDR (sum of all active subscription plan prices)
+- `error_rate` is a decimal between 0.0 and 1.0 (e.g., 0.02 = 2%)
+- `daily_active_users` counts users who created a session today
 
 #### Get Revenue Metrics
 
@@ -984,24 +1156,46 @@ Authorization: Bearer <admin_access_token>
 ```
 
 **Query Parameters:**
-- `period` (optional): `monthly`, `quarterly` (default: `monthly`)
+- `period` (optional): `daily`, `weekly`, or `monthly` (default: `monthly`)
 
 **Response:**
 ```json
 {
   "period": "monthly",
-  "total_revenue_idr": 120000000,
-  "total_revenue_usd": 8000,
-  "mrr": 52500000,
-  "arr": 630000000,
-  "ltv": 1500000,
-  "cac": 200000,
-  "trends": {
-    "month_over_month": "+5%",
-    "quarter_over_quarter": "+15%"
-  }
+  "total_revenue_idr": 120000000.0,
+  "total_revenue_usd": 8000.0,
+  "transactions": 250,
+  "average_order_value": 480000.0,
+  "trend": [
+    {
+      "date": "2024-01",
+      "revenue_idr": 10000000.0,
+      "revenue_usd": 666.67,
+      "transactions": 20
+    },
+    {
+      "date": "2024-02",
+      "revenue_idr": 12000000.0,
+      "revenue_usd": 800.0,
+      "transactions": 25
+    }
+  ]
 }
 ```
+
+**Status Codes:**
+- `200 OK`: Revenue metrics retrieved successfully
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Admin access required
+- `500 Internal Server Error`: Failed to retrieve revenue metrics
+
+**Note:**
+- `period` determines the date range and grouping:
+  - `daily`: Last 30 days, grouped by day
+  - `weekly`: Last 3 months, grouped by week
+  - `monthly`: Last 12 months, grouped by month
+- `average_order_value` is calculated as `total_revenue_idr / transactions`
+- `trend` array contains revenue data points for the selected period
 
 ### Plan Management
 
@@ -1016,7 +1210,34 @@ List all subscription plans (admin view).
 Authorization: Bearer <admin_access_token>
 ```
 
-**Response:** Same as public plans endpoint
+**Query Parameters:**
+- `active_only` (optional): `true` to show only active plans (default: `false`)
+
+**Response:**
+```json
+{
+  "plans": [
+    {
+      "id": "uuid",
+      "name": "free",
+      "daily_photo_limit": 10,
+      "price_idr": 0,
+      "price_usd": 0.0,
+      "description": "Perfect for casual users",
+      "features": ["10 daily analyses", "7-day history"],
+      "is_active": true,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": null
+    }
+  ]
+}
+```
+
+**Status Codes:**
+- `200 OK`: Plans retrieved successfully
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Admin access required
+- `500 Internal Server Error`: Failed to retrieve plans
 
 #### Create Plan (Admin)
 
@@ -1033,7 +1254,6 @@ Authorization: Bearer <admin_access_token>
 ```json
 {
   "name": "starter",
-  "display_name": "Starter Plan",
   "daily_photo_limit": 50,
   "price_idr": 30000,
   "price_usd": 2.00,
@@ -1043,7 +1263,39 @@ Authorization: Bearer <admin_access_token>
 }
 ```
 
-**Response:** Created plan object
+**Validation:**
+- `name` (required): Plan name (unique identifier)
+- `daily_photo_limit` (required): Daily photo analysis limit
+- `price_idr` (required): Price in Indonesian Rupiah
+- `price_usd` (required): Price in US Dollars
+- `description` (optional): Plan description
+- `features` (optional): Array of feature strings
+- `is_active` (optional): Whether plan is active (default: `true`)
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "name": "starter",
+  "daily_photo_limit": 50,
+  "price_idr": 30000,
+  "price_usd": 2.00,
+  "description": "For small sellers",
+  "features": ["50 daily analyses", "30-day history"],
+  "is_active": true,
+  "created_at": "2024-01-20T10:30:00Z",
+  "updated_at": "2024-01-20T10:30:00Z"
+}
+```
+
+**Status Codes:**
+- `201 Created`: Plan created successfully
+- `400 Bad Request`: Validation error or invalid request body
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Admin access required
+- `500 Internal Server Error`: Failed to create plan
+
+**Note:** All plan creation actions are logged in audit logs.
 
 #### Update Plan (Admin)
 
@@ -1062,12 +1314,41 @@ Authorization: Bearer <admin_access_token>
 **Request Body:**
 ```json
 {
-  "price_idr": 70000,
-  "is_active": true
+  "name": "premium",              // Optional: Update plan name
+  "daily_photo_limit": 1000,     // Optional: Update daily limit
+  "price_idr": 70000,            // Optional: Update price in IDR
+  "price_usd": 4.67,             // Optional: Update price in USD
+  "description": "Updated description", // Optional: Update description
+  "features": ["Updated features"],     // Optional: Update features array
+  "is_active": true                      // Optional: Update active status
 }
 ```
 
-**Response:** Updated plan object
+**Response:**
+```json
+{
+  "id": "uuid",
+  "name": "premium",
+  "daily_photo_limit": 1000,
+  "price_idr": 70000,
+  "price_usd": 4.67,
+  "description": "Updated description",
+  "features": ["Updated features"],
+  "is_active": true,
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-20T12:00:00Z"
+}
+```
+
+**Status Codes:**
+- `200 OK`: Plan updated successfully
+- `400 Bad Request`: Invalid plan ID or request body
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Admin access required
+- `404 Not Found`: Plan not found
+- `500 Internal Server Error`: Failed to update plan
+
+**Note:** All plan updates are logged in audit logs with change tracking.
 
 #### Delete Plan (Admin)
 
@@ -1090,6 +1371,19 @@ Authorization: Bearer <admin_access_token>
 }
 ```
 
+**Status Codes:**
+- `200 OK`: Plan deleted successfully
+- `400 Bad Request`: Invalid plan ID
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Admin access required
+- `404 Not Found`: Plan not found
+- `500 Internal Server Error`: Failed to delete plan
+
+**Note:** 
+- Plan deletion is a soft delete (sets `is_active: false`)
+- All deletion actions are logged in audit logs
+- Existing subscriptions are not affected by plan deletion
+
 ### AI Model Management
 
 #### List AI Models (Admin)
@@ -1105,24 +1399,50 @@ Authorization: Bearer <admin_access_token>
 
 **Response:**
 ```json
-{
-  "models": [
-    {
-      "id": "openai/gpt-4o-mini",
-      "display_name": "GPT-4o Mini",
-      "provider": "openai",
-      "cost_per_1k_tokens_usd": 0.00015,
-      "average_latency_ms": 1800,
-      "modes_supported": ["fast", "accurate"],
-      "fallback_chain": ["anthropic/claude-3-5-haiku"],
-      "status": "active",
-      "is_default": true,
-      "max_tokens": 4000,
-      "temperature": 0.7
-    }
-  ]
-}
+[
+  {
+    "id": "openai/gpt-4o-mini",
+    "display_name": "GPT-4o Mini",
+    "provider": "openai",
+    "cost_per_1k_tokens_usd": 0.00015,
+    "average_latency_ms": 1800,
+    "modes_supported": ["fast", "accurate"],
+    "fallback_chain": ["anthropic/claude-3-5-haiku"],
+    "status": "active",
+    "is_default": true,
+    "max_tokens": 4000,
+    "temperature": 0.7,
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": null
+  },
+  {
+    "id": "anthropic/claude-3-5-haiku",
+    "display_name": "Claude 3.5 Haiku",
+    "provider": "anthropic",
+    "cost_per_1k_tokens_usd": 0.00025,
+    "average_latency_ms": 2200,
+    "modes_supported": ["accurate", "knowledge_based"],
+    "fallback_chain": [],
+    "status": "active",
+    "is_default": false,
+    "max_tokens": 200000,
+    "temperature": 0.7,
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": null
+  }
+]
 ```
+
+**Status Codes:**
+- `200 OK`: Models retrieved successfully
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Admin access required
+- `500 Internal Server Error`: Failed to retrieve models
+
+**Note:** 
+- Models are ordered by `is_default DESC, display_name ASC` (default model first)
+- Only active models are used for price estimation
+- `status` can be: `active`, `disabled`, or `deprecated`
 
 #### Set Default Model (Admin)
 
@@ -1145,10 +1465,29 @@ Authorization: Bearer <admin_access_token>
 **Response:**
 ```json
 {
-  "message": "Default model updated successfully",
-  "model_id": "anthropic/claude-3-5-haiku"
+  "message": "Default model updated",
+  "default_model": {
+    "id": "anthropic/claude-3-5-haiku",
+    "display_name": "Claude 3.5 Haiku",
+    "provider": "anthropic",
+    "status": "active",
+    "is_default": true
+  }
 }
 ```
+
+**Status Codes:**
+- `200 OK`: Default model updated successfully
+- `400 Bad Request`: Cannot set inactive model as default
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Admin access required
+- `404 Not Found`: Model not found
+- `500 Internal Server Error`: Failed to update default model
+
+**Note:** 
+- Only active models can be set as default
+- Setting a new default automatically unsets the previous default
+- All changes are logged in audit logs
 
 #### Update Model Configuration (Admin)
 
@@ -1167,16 +1506,46 @@ Authorization: Bearer <admin_access_token>
 **Request Body:**
 ```json
 {
-  "display_name": "GPT-4o Mini Updated",
-  "modes_supported": ["fast", "accurate", "knowledge_based"],
-  "fallback_chain": ["anthropic/claude-3-5-haiku", "meta-llama/llama-3.1-405b-instruct"],
-  "status": "active",
-  "max_tokens": 8000,
-  "temperature": 0.8
+  "display_name": "GPT-4o Mini Updated",                    // Optional: Update display name
+  "modes_supported": ["fast", "accurate", "knowledge_based"], // Optional: Update supported modes
+  "fallback_chain": ["anthropic/claude-3-5-haiku"],         // Optional: Update fallback chain
+  "status": "active",                                         // Optional: Update status ("active", "disabled", "deprecated")
+  "max_tokens": 8000,                                         // Optional: Update max tokens
+  "temperature": 0.8                                          // Optional: Update temperature
 }
 ```
 
-**Response:** Updated model object
+**Response:**
+```json
+{
+  "id": "openai/gpt-4o-mini",
+  "display_name": "GPT-4o Mini Updated",
+  "provider": "openai",
+  "cost_per_1k_tokens_usd": 0.00015,
+  "average_latency_ms": 1800,
+  "modes_supported": ["fast", "accurate", "knowledge_based"],
+  "fallback_chain": ["anthropic/claude-3-5-haiku"],
+  "status": "active",
+  "is_default": true,
+  "max_tokens": 8000,
+  "temperature": 0.8,
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-20T12:00:00Z"
+}
+```
+
+**Status Codes:**
+- `200 OK`: Model updated successfully
+- `400 Bad Request`: Invalid model ID or request body
+- `401 Unauthorized`: Authentication required
+- `403 Forbidden`: Admin access required
+- `404 Not Found`: Model not found
+- `500 Internal Server Error`: Failed to update model
+
+**Note:** 
+- All model updates are logged in audit logs
+- Changing `status` to `disabled` or `deprecated` will prevent the model from being used
+- If updating a default model to inactive status, you must set another model as default first
 
 ---
 

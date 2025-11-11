@@ -13,6 +13,8 @@ import (
 
 	"github.com/detect-price-by-photo/backend/internal/user/auth/models"
 	"github.com/detect-price-by-photo/backend/internal/utils"
+
+	"github.com/gofrs/uuid/v5"
 )
 
 // helper: try to detect if a user struct indicates the email is already verified.
@@ -84,73 +86,11 @@ func (s *AuthService) InitiateEmailVerification(ctx context.Context, email strin
 
 	userID := user.ID
 
-	// Check for an existing valid token for this user/email
-	tokens, err := s.authRepo.FindAllOneTimeTokens(ctx)
-	now := time.Now()
-	var existingToken *models.OneTimeToken
-	if err == nil {
-		for _, t := range tokens {
-			if t.UserID != nil && *t.UserID == userID &&
-				t.Subject == models.OneTimeTokenSubjectEmailVerification &&
-				t.RelatesTo == email &&
-				now.Before(t.ExpiresAt) {
-				existingToken = t
-				break
-			}
-		}
-	}
-
-	if existingToken != nil {
-		// If a valid token exists, update last_sent_at and do not generate a new token
-		existingToken.LastSentAt = &now
-		if err := s.authRepo.UpdateOneTimeTokenLastSentAt(ctx, existingToken.ID, now); err != nil {
-			return err
-		}
-		// Can't retrieve raw token from the DB (we only store its hash), so we cannot resend the exact token.
-		return nil
-	}
-
-	// Generate a new, cryptographically secure, URL-safe token (length 48, includes unix timestamp)
-	rawToken, err := apputils.GenerateURLSafeToken(48)
+	rawToken, err := s.createEmailVerificationToken(ctx, userID, email, redirectTo)
 	if err != nil {
-		return fmt.Errorf("failed to generate token: %w", err)
-	}
-	hash := sha256.Sum256([]byte(rawToken))
-	tokenHash := hex.EncodeToString(hash[:])
-	expiresAt := now.Add(15 * time.Minute)
-
-	// Remove any old tokens for this user/email
-	for _, t := range tokens {
-		if t.UserID != nil && *t.UserID == userID && t.Subject == models.OneTimeTokenSubjectEmailVerification {
-			_ = s.authRepo.DeleteOneTimeToken(ctx, t.ID)
-		}
-	}
-
-	// Prepare metadata and store the new token hash in the database
-	var metadata map[string]any
-	if redirectTo != "" {
-		metadata = map[string]any{
-			"redirect_to": redirectTo,
-		}
-	}
-
-	token := &models.OneTimeToken{
-		UserID:     &userID,
-		Subject:    models.OneTimeTokenSubjectEmailVerification,
-		TokenHash:  tokenHash,
-		RelatesTo:  email,
-		Metadata:   metadata,
-		CreatedAt:  now,
-		ExpiresAt:  expiresAt,
-		LastSentAt: &now,
-	}
-	if err := s.authRepo.CreateOneTimeToken(ctx, token); err != nil {
 		return err
 	}
-
-	// Send the rawToken to the user's email address, include redirectTo when present
 	if err := s.sendVerificationEmail(ctx, email, rawToken, redirectTo); err != nil {
-		// If sending fails, propagate the error (caller can decide what to do)
 		return fmt.Errorf("failed to send verification email: %w", err)
 	}
 
@@ -226,55 +166,47 @@ func (s *AuthService) ResendEmailVerification(ctx context.Context, email string,
 
 	userID := user.ID
 
-	// Check for an existing valid token for this user/email
-	tokens, err := s.authRepo.FindAllOneTimeTokens(ctx)
+	rawToken, err := s.createEmailVerificationToken(ctx, userID, email, redirectTo)
+	if err != nil {
+		return err
+	}
+	if err := s.sendVerificationEmail(ctx, email, rawToken, redirectTo); err != nil {
+		return fmt.Errorf("failed to send verification email: %w", err)
+	}
+
+		return nil
+	}
+
+func (s *AuthService) createEmailVerificationToken(ctx context.Context, userID uuid.UUID, email, redirectTo string) (string, error) {
 	now := time.Now()
-	var existingToken *models.OneTimeToken
-	if err == nil {
-		for _, t := range tokens {
-			if t.UserID != nil && *t.UserID == userID &&
-				t.Subject == models.OneTimeTokenSubjectEmailVerification &&
-				t.RelatesTo == email &&
-				now.Before(t.ExpiresAt) {
-				existingToken = t
-				break
+
+	tokens, err := s.authRepo.FindAllOneTimeTokens(ctx)
+	if err != nil {
+		if s.logger != nil {
+			s.logger.Warn("failed to list one-time tokens; continuing with empty list", "error", err.Error())
+		}
+		tokens = []*models.OneTimeToken{}
+	}
+
+	for _, t := range tokens {
+		if t.UserID != nil && *t.UserID == userID && t.Subject == models.OneTimeTokenSubjectEmailVerification {
+			if delErr := s.authRepo.DeleteOneTimeToken(ctx, t.ID); delErr != nil && s.logger != nil {
+				s.logger.Warn("failed to delete existing verification token", "token_id", t.ID.String(), "error", delErr.Error())
 			}
 		}
 	}
 
-	if existingToken != nil {
-		// If a valid token exists, update last_sent_at and do not generate a new token
-		existingToken.LastSentAt = &now
-		if err := s.authRepo.UpdateOneTimeTokenLastSentAt(ctx, existingToken.ID, now); err != nil {
-			return err
-		}
-		// Can't retrieve raw token from the DB (we only store its hash), so we cannot resend the exact token.
-		return nil
-	}
-
-	// If no valid token exists, revoke all old tokens and generate a new one
-	for _, t := range tokens {
-		if t.UserID != nil && *t.UserID == userID &&
-			t.Subject == models.OneTimeTokenSubjectEmailVerification &&
-			t.RelatesTo == email {
-			_ = s.authRepo.DeleteOneTimeToken(ctx, t.ID)
-		}
-	}
-
-	// Generate a new, cryptographically secure, URL-safe token (length 48, includes unix timestamp)
 	rawToken, err := apputils.GenerateURLSafeToken(48)
 	if err != nil {
-		return fmt.Errorf("failed to generate token: %w", err)
+		return "", fmt.Errorf("failed to generate token: %w", err)
 	}
+
 	hash := sha256.Sum256([]byte(rawToken))
 	tokenHash := hex.EncodeToString(hash[:])
-	expiresAt := now.Add(15 * time.Minute)
 
-	var metadata map[string]any
+	metadata := map[string]any(nil)
 	if redirectTo != "" {
-		metadata = map[string]any{
-			"redirect_to": redirectTo,
-		}
+		metadata = map[string]any{"redirect_to": redirectTo}
 	}
 
 	token := &models.OneTimeToken{
@@ -284,19 +216,15 @@ func (s *AuthService) ResendEmailVerification(ctx context.Context, email string,
 		RelatesTo:  email,
 		Metadata:   metadata,
 		CreatedAt:  now,
-		ExpiresAt:  expiresAt,
+		ExpiresAt:  now.Add(15 * time.Minute),
 		LastSentAt: &now,
 	}
+
 	if err := s.authRepo.CreateOneTimeToken(ctx, token); err != nil {
-		return err
+		return "", err
 	}
 
-	// Send the new rawToken to the user's email address
-	if err := s.sendVerificationEmail(ctx, email, rawToken, redirectTo); err != nil {
-		return fmt.Errorf("failed to send verification email: %w", err)
-	}
-
-	return nil
+	return rawToken, nil
 }
 
 // sendVerificationEmail constructs the verification URL and sends the email using the injected mailer.
@@ -357,6 +285,7 @@ func (s *AuthService) sendVerificationEmail(ctx context.Context, toEmail, rawTok
 		"Email":       toEmail,
 		"DisplayName": displayName,
 		"VerifyURL":   verifyURL,
+		"Year":        time.Now().Year(),
 	}
 
 	subject := "Verify your email address"

@@ -60,6 +60,7 @@ func (h *Handler) ResetPassword(c echo.Context) error {
 	if err := h.validator.Struct(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]interface{}{
 			"error":   "Validation failed",
+			"message": "Password must be at least 12 characters long",
 			"details": err.Error(),
 		})
 	}

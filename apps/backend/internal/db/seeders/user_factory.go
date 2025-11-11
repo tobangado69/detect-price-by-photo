@@ -8,7 +8,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/detect-price-by-photo/backend/internal/utils"
+	apputils "github.com/detect-price-by-photo/backend/internal/utils"
 )
 
 type UserSeed struct {
@@ -16,6 +16,7 @@ type UserSeed struct {
 	Email           string
 	Username        string
 	Password        string
+	Role            string // 'user' or 'admin'
 	Metadata        map[string]string
 	EmailVerifiedAt *time.Time // pakai time.Time pointer
 }
@@ -28,9 +29,10 @@ func UserFactory(ctx context.Context, pool *pgxpool.Pool) error {
 	users := []UserSeed{
 		{
 			DisplayName:     "Admin Sistem",
-			Email:           "admin@example.com",
+			Email:           "admin@detectprice.com",
 			Username:        "admin",
-			Password:        "secure.password",
+			Password:        "admin123",
+			Role:            "admin",
 			Metadata:        map[string]string{"timezone": "Asia/Jakarta"},
 			EmailVerifiedAt: &now, // verified
 		},
@@ -39,18 +41,20 @@ func UserFactory(ctx context.Context, pool *pgxpool.Pool) error {
 			Email:           "johndoe@example.com",
 			Username:        "johndoe",
 			Password:        "secure.password",
+			Role:            "user",
 			Metadata:        map[string]string{"timezone": "UTC"},
 			EmailVerifiedAt: nil, // unverified
 		},
 	}
 
 	insertUserQuery := `
-        INSERT INTO public.users (username, display_name, email, metadata, email_verified_at)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO public.users (username, display_name, email, role, metadata, email_verified_at)
+        VALUES ($1, $2, $3, $4, $5, $6)
         ON CONFLICT (username) DO UPDATE
         SET
             display_name = EXCLUDED.display_name,
             email = EXCLUDED.email,
+            role = EXCLUDED.role,
             metadata = EXCLUDED.metadata,
             email_verified_at = EXCLUDED.email_verified_at
         RETURNING id
@@ -82,7 +86,7 @@ func UserFactory(ctx context.Context, pool *pgxpool.Pool) error {
 		}
 
 		var userID string
-		err = tx.QueryRow(ctx, insertUserQuery, u.Username, u.DisplayName, u.Email, metadataJSON, u.EmailVerifiedAt).Scan(&userID)
+		err = tx.QueryRow(ctx, insertUserQuery, u.Username, u.DisplayName, u.Email, u.Role, metadataJSON, u.EmailVerifiedAt).Scan(&userID)
 		if err != nil {
 			slog.Error("Failed to seed user", "username", u.Username, "err", err)
 			return err

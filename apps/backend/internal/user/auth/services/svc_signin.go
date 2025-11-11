@@ -5,10 +5,10 @@ import (
 	"errors"
 	"time"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/detect-price-by-photo/backend/internal/user/auth/models"
 	user_models "github.com/detect-price-by-photo/backend/internal/user/user/models"
 	"github.com/detect-price-by-photo/backend/internal/utils"
+	"github.com/gofrs/uuid/v5"
 )
 
 // ErrInvalidCredentials is returned when authentication fails.
@@ -52,10 +52,27 @@ func (s *AuthService) signinWithCredentials(
 		return nil, ErrInvalidCredentials
 	}
 
-	// Then check if the user's email is verified
+	// Check if the user's email is verified
 	if u, ok := any(user).(interface{ GetEmailVerifiedAt() *time.Time }); ok {
 		if u.GetEmailVerifiedAt() == nil {
 			return nil, ErrEmailNotVerified
+		}
+	}
+
+	// Check ban status - get fresh user data to ensure we have latest ban info
+	userModel := user.AsUserModel()
+	if userModel.BannedAt != nil {
+		// Check if ban has expired
+		if userModel.BanExpires == nil || userModel.BanExpires.After(time.Now()) {
+			// User is banned and ban hasn't expired
+			return nil, ErrUserBanned
+		}
+		// Ban has expired, clear ban status automatically
+		userModel.BannedAt = nil
+		userModel.BanExpires = nil
+		userModel.BanReason = nil
+		if err := s.userService.UpdateUser(ctx, &userModel); err != nil {
+			s.logger.Warn("failed to clear expired ban", "user_id", user.GetID().String(), "error", err.Error())
 		}
 	}
 
@@ -123,10 +140,24 @@ func (s *AuthService) signinWithCredentials(
 		return nil, err
 	}
 
+	// Update last_login_at after successful authentication
+	now := time.Now()
+	userModel.LastLoginAt = &now
+	if err := s.userService.UpdateUser(ctx, &userModel); err != nil {
+		// Log error but don't fail login if last_login_at update fails
+		s.logger.Warn("failed to update last_login_at", "user_id", user.GetID().String(), "error", err.Error())
+	}
+
+	// Fetch fresh user data to ensure we return latest ban status and last_login_at
+	freshUser, err := s.userService.GetUserByID(ctx, user.GetID())
+	if err == nil && freshUser != nil {
+		userModel = *freshUser
+	}
+
 	// Return the authenticated user with tokens and session info
 	authUser := &models.AuthenticatedUser{
 		UserWithCredentials: models.UserWithCredentials{
-			User:         user.AsUserModel(), // Cast to user_models.User
+			User:         userModel, // Use fresh user data with updated last_login_at
 			AccessToken:  accessToken,
 			RefreshToken: refreshToken,
 		},

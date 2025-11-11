@@ -2,11 +2,14 @@ package services
 
 import (
 	"context"
+	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/detect-price-by-photo/backend/internal/notification"
 	"github.com/detect-price-by-photo/backend/internal/user/auth/models"
 	"github.com/detect-price-by-photo/backend/internal/user/auth/repository"
+	user_models "github.com/detect-price-by-photo/backend/internal/user/user/models"
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/lestrrat-go/jwx/jwa"
@@ -14,8 +17,17 @@ import (
 	usersvc "github.com/detect-price-by-photo/backend/internal/user/user/services"
 )
 
+// ErrUserBanned is returned when the user account is banned.
+var ErrUserBanned = errors.New("user account is banned")
+
+// ErrEmailAlreadyRegistered is returned when attempting to sign up with an email that already exists.
+var ErrEmailAlreadyRegistered = errors.New("email already registered")
+
 // AuthServiceInterface defines the contract for user business logic.
 type AuthServiceInterface interface {
+	// Public sign-up
+	SignUp(ctx context.Context, req *models.SignUpRequest) (*user_models.User, error)
+
 	// User password management
 	SetUserPassword(ctx context.Context, userPassword *models.UserPassword) error
 	UpdateUserPassword(ctx context.Context, userID uuid.UUID, currentPassword, newPassword string) error
@@ -64,6 +76,7 @@ type AuthService struct {
 	signingAlg         jwa.SignatureAlgorithm // Signing algorithm (default: HS256)
 	mailer             *notification.Mailer
 	baseURL            string // Base URL used when constructing verification links
+	logger             *slog.Logger
 }
 
 type AuthServiceOpts struct {
@@ -75,6 +88,7 @@ type AuthServiceOpts struct {
 	SigningAlg         jwa.SignatureAlgorithm // Signing algorithm (default: HS256)
 	Mailer             *notification.Mailer   // Mailer service for sending emails
 	BaseURL            string                 // BaseURL used when constructing verification links (MANDATORY).
+	Logger             *slog.Logger           // Logger for logging operations
 }
 
 // NewAuthService creates a new AuthService.
@@ -113,5 +127,6 @@ func NewAuthService(opts AuthServiceOpts) *AuthService {
 		signingAlg:         opts.SigningAlg,
 		mailer:             opts.Mailer,
 		baseURL:            opts.BaseURL,
+		logger:             opts.Logger,
 	}
 }

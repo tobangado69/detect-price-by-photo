@@ -3,6 +3,14 @@
 
 package models
 
+type SignUpRequest struct {
+	DisplayName           string `json:"display_name,omitempty" validate:"omitempty,max=100" example:"John Doe"`
+	Email                  string `json:"email" validate:"required,email" example:"user@example.com"`
+	Password               string `json:"password" validate:"required,min=12" example:"StrongPass123"`
+	PasswordConfirmation   string `json:"password_confirmation" validate:"required,eqfield=Password" example:"StrongPass123"`
+	RedirectTo             string `json:"redirect_to,omitempty" validate:"omitempty,url" example:"https://app.example.com/welcome"`
+}
+
 type SetPasswordRequest struct {
 	UserID               string `json:"user_id" validate:"required,uuid"`
 	Password             string `json:"password" validate:"required,min=8" example:"secure.password"`

@@ -58,6 +58,11 @@ func (h *Handler) SignInWithEmail(c echo.Context) error {
 				"error":   "Email is not verified",
 				"details": "Please verify your email address before signing in.",
 			})
+		case errors.Is(err, services.ErrUserBanned):
+			return c.JSON(http.StatusForbidden, map[string]interface{}{
+				"error":   "Account is banned",
+				"details": "Your account has been banned. Please contact support if you believe this is an error.",
+			})
 		default:
 			return c.JSON(http.StatusInternalServerError, map[string]interface{}{
 				"error":   "Internal server error",
@@ -114,6 +119,11 @@ func (h *Handler) SignInWithUsername(c echo.Context) error {
 			return c.JSON(http.StatusUnauthorized, map[string]interface{}{
 				"error":   "Email is not verified",
 				"details": "Please verify your email address before signing in.",
+			})
+		case errors.Is(err, services.ErrUserBanned):
+			return c.JSON(http.StatusForbidden, map[string]interface{}{
+				"error":   "Account is banned",
+				"details": "Your account has been banned. Please contact support if you believe this is an error.",
 			})
 		default:
 			return c.JSON(http.StatusInternalServerError, map[string]interface{}{

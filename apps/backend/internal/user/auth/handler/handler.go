@@ -11,6 +11,9 @@ import (
 
 // HandlerInterface defines the contract for auth handlers.
 type HandlerInterface interface {
+	// Public auth handlers
+	SignUp(c echo.Context) error
+
 	// Password handlers
 	SetUserPassword(c echo.Context) error
 	UpdateUserPassword(c echo.Context) error

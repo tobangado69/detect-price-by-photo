@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/detect-price-by-photo/backend/internal/user/auth/models"
-	"github.com/detect-price-by-photo/backend/internal/utils"
+	apputils "github.com/detect-price-by-photo/backend/internal/utils"
 )
 
 // InitiatePasswordReset generates a password reset token and sends it via email.
@@ -24,32 +24,15 @@ func (s *AuthService) InitiatePasswordReset(ctx context.Context, email string) e
 
 	userID := user.ID
 
-	// Check for an existing valid token for this user/email
+	// Get all existing tokens (we'll delete old password reset tokens below)
 	tokens, err := s.authRepo.FindAllOneTimeTokens(ctx)
 	now := time.Now()
-	var existingToken *models.OneTimeToken
-	if err == nil {
-		for _, t := range tokens {
-			if t.UserID != nil && *t.UserID == userID &&
-				t.Subject == models.OneTimeTokenSubjectPasswordReset &&
-				t.RelatesTo == email &&
-				now.Before(t.ExpiresAt) {
-				existingToken = t
-				break
-			}
-		}
+	if err != nil {
+		tokens = []*models.OneTimeToken{} // Initialize empty if query fails
 	}
 
-	if existingToken != nil {
-		// If a valid token exists, update last_sent_at
-		existingToken.LastSentAt = &now
-		if err := s.authRepo.UpdateOneTimeTokenLastSentAt(ctx, existingToken.ID, now); err != nil {
-			return err
-		}
-		// Note: We can't resend the exact token since we only store the hash
-		// In production, you might want to generate a new token here
-		return nil
-	}
+	// Always generate a new token and send email
+	// This ensures users receive an email every time they request a reset
 
 	// Generate a new, cryptographically secure, URL-safe token
 	rawToken, err := apputils.GenerateURLSafeToken(48)
@@ -84,10 +67,12 @@ func (s *AuthService) InitiatePasswordReset(ctx context.Context, email string) e
 
 	// Send the rawToken to the user's email address
 	if err := s.sendPasswordResetEmail(ctx, email, rawToken); err != nil {
-		// If sending fails, still return success to prevent email enumeration
+		// Log the error but still return success to prevent email enumeration
+		s.logger.Error("failed to send password reset email", "email", email, "error", err.Error())
 		return nil
 	}
 
+	s.logger.Info("password reset email sent successfully", "email", email)
 	return nil
 }
 
@@ -159,7 +144,7 @@ func (s *AuthService) sendPasswordResetEmail(ctx context.Context, email, token s
 	if s.mailer != nil {
 		subject := "Reset Your Password - Detect Price by Photo"
 		templateName := "password_reset.html" // Template name (can be plain text if template not available)
-		
+
 		// Try to fetch user to pass display name to template
 		var displayName string
 		if s.userService != nil {
@@ -196,7 +181,7 @@ If you didn't request this password reset, please ignore this email.
 Best regards,
 Detect Price by Photo Team
 `, displayNameStr, resetURL)
-			
+
 			// Try plain text email as fallback
 			if err := s.mailer.SendEmail(ctx, []string{email}, subject, "", map[string]any{"Body": body}); err != nil {
 				return fmt.Errorf("failed to send password reset email: %w", err)
