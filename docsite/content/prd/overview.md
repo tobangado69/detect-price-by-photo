@@ -1,3 +1,8 @@
+---
+title: Overview
+weight: 0
+---
+
 # Fullstack PRD: Detect Price by Photo
 
 ## 1. Executive Summary

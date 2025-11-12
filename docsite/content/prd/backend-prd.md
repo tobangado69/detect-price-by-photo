@@ -1,3 +1,8 @@
+---
+title: Backend PRD
+weight: 1
+---
+
 # Backend PRD: Detect Price by Photo
 
 ## 1. Executive Summary

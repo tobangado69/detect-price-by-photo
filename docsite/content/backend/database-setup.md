@@ -1,3 +1,8 @@
+---
+title: Database Setup
+weight: 3
+---
+
 # Running Backend in Docker
 
 ## Quick Start
@@ -14,19 +19,19 @@ make docker-up
 
 ### View Backend Logs
 ```bash
-docker logs -f detect-price-backend-1
+docker logs -f backend
 ```
 
 ### Stop Backend
 ```bash
 make docker-down
 # or stop only backend
-docker compose -p detect-price -f docker/docker-compose.yml stop backend
+docker compose -f compose.yaml stop backend
 ```
 
 ## Backend Service Details
 
-- **Container Name:** `detect-price-backend-1`
+- **Container Name:** `backend`
 - **Port Mapping:** `8080:8000` (host:container)
 - **Health Check:** `http://localhost:8080/healthz`
 - **API Base URL:** `http://localhost:8080/api/v1`
@@ -42,7 +47,7 @@ The backend reads from `docker/.env.dev`:
 ## Troubleshooting
 
 ### Backend not starting?
-1. Check logs: `docker logs detect-price-backend-1`
+1. Check logs: `docker logs backend`
 2. Verify database is running: `docker ps | grep db`
 3. Check environment variables: `cat docker/.env.dev`
 
@@ -95,7 +100,7 @@ curl -X POST http://localhost:8080/api/v1/auth/signin/email \
 
 4. **View logs:**
    ```bash
-   docker logs -f detect-price-backend-1
+   docker logs -f backend
    ```
 
 5. **Stop everything:**

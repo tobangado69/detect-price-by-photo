@@ -1,22 +1,42 @@
+---
+title: Midtrans Setup
+weight: 1
+---
+
 # Midtrans Configuration
 
 ## Environment Variables
 
-The following Midtrans credentials have been configured in `docker/.env.dev`:
+**⚠️ IMPORTANT: All Midtrans credentials must be set via environment variables. Never hardcode API keys in source code.**
+
+Configure the following environment variables in `docker/.env.dev` (for local development) or your production environment:
 
 ```env
-MIDTRANS_SERVER_KEY=SB-Mid-server-8u5BAzgmche547jrjzElSMHX
-MIDTRANS_CLIENT_KEY=SB-Mid-client-g319kiulB1K-LLy_
-MIDTRANS_ENV=sandbox
-MIDTRANS_MERCHANT_ID=G369803106
+# Midtrans Payment Gateway Configuration
+MIDTRANS_SERVER_KEY=your-midtrans-server-key-here
+MIDTRANS_CLIENT_KEY=your-midtrans-client-key-here
+MIDTRANS_ENV=sandbox                    # sandbox or production
+MIDTRANS_MERCHANT_ID=your-merchant-id  # Optional, if required by your Midtrans setup
 ```
 
 ## Configuration Details
 
-- **Environment:** `sandbox` (for testing)
-- **Merchant ID:** `G369803106`
-- **Server Key:** Used for server-side operations (webhooks, transaction status)
-- **Client Key:** Used for client-side operations (Snap API)
+- **Environment:** Set `MIDTRANS_ENV` to `sandbox` for testing or `production` for live payments
+- **Server Key:** Used for server-side operations (webhooks, transaction status, server-to-server API calls)
+- **Client Key:** Used for client-side operations (Snap API integration in frontend)
+- **Merchant ID:** Your Midtrans merchant identifier (if required)
+
+## Getting Your Credentials
+
+1. **Sandbox (Testing):**
+   - Sign up at [Midtrans Dashboard](https://dashboard.sandbox.midtrans.com/)
+   - Navigate to Settings → Access Keys
+   - Copy Server Key and Client Key
+
+2. **Production:**
+   - Complete account verification
+   - Get production credentials from Settings → Access Keys
+   - Update `MIDTRANS_ENV=production`
 
 ## Backend Integration
 

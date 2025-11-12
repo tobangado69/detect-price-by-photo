@@ -1,3 +1,8 @@
+---
+title: Backend Architecture
+weight: 1
+---
+
 # Technical Implementation Guide: Detect Price by Photo
 
 ## 1. Project Initialization & Setup
@@ -30,6 +35,11 @@ go get github.com/labstack/echo/v4                    # HTTP server
 ```
 
 **Environment configuration (.env):**
+
+⚠️ **CRITICAL SECURITY:** All API keys and secrets must be set via environment variables. Never hardcode credentials in source code.
+
+Copy `docker/.env.example` to `docker/.env.dev` and fill in your actual values:
+
 ```env
 # Database
 DATABASE_URL=postgresql://user:password@localhost:5432/detect_price_db
@@ -37,14 +47,15 @@ DATABASE_URL=postgresql://user:password@localhost:5432/detect_price_db
 # Redis
 REDIS_URL=redis://localhost:6379
 
-# API Keys
-OPENROUTER_API_KEY=your_openrouter_key
-MIDTRANS_SERVER_KEY=your_midtrans_server_key
-MIDTRANS_CLIENT_KEY=your_midtrans_client_key
+# API Keys - REQUIRED: Set these via environment variables
+OPENROUTER_API_KEY=your_openrouter_key_here
+MIDTRANS_SERVER_KEY=your_midtrans_server_key_here
+MIDTRANS_CLIENT_KEY=your_midtrans_client_key_here
 MIDTRANS_ENV=sandbox  # or 'production'
 
-# JWT
-JWT_SECRET=your_jwt_secret_min_32_chars_long
+# JWT - REQUIRED: Generate a secure random secret (minimum 32 characters)
+# Example: openssl rand -base64 32
+JWT_SECRET=your_jwt_secret_min_32_chars_long_here
 JWT_EXPIRY_ACCESS=900          # 15 minutes
 JWT_EXPIRY_REFRESH=604800      # 7 days
 
@@ -53,17 +64,19 @@ PORT=8080
 ENV=development  # or 'production'
 CORS_ORIGIN=http://localhost:5173,https://detectpricebyphoto.com
 
-# Cloud Storage
+# Cloud Storage - REQUIRED: Set via environment variables
 AWS_S3_BUCKET=detect-price-uploads
 AWS_REGION=ap-southeast-1
-AWS_ACCESS_KEY_ID=your_aws_key
-AWS_SECRET_ACCESS_KEY=your_aws_secret
+AWS_ACCESS_KEY_ID=your_aws_access_key_id_here
+AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key_here
 
 # AI Configuration (admin-controlled defaults)
 AI_DEFAULT_MODEL=openai/gpt-4o-mini
 AI_ALLOWED_MODELS=openai/gpt-4o-mini,anthropic/claude-3-5-haiku,meta/llama3.1-405b
 AI_MODE_ROUTING=fast:openai/gpt-4o-mini|accurate:anthropic/claude-3-5-haiku|knowledge:meta/llama3.1-405b
 ```
+
+**See `docker/.env.example` for complete configuration reference.**
 
 ### 1.2 Frontend Setup (Vite + React)
 

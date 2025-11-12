@@ -1,3 +1,8 @@
+---
+title: Frontend PRD
+weight: 2
+---
+
 # Frontend PRD: Detect Price by Photo
 
 ## 1. Executive Summary

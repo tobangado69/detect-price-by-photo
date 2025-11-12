@@ -1,0 +1,69 @@
+# yaml-language-server: $schema=https://json.schemastore.org/hugo.json
+
+enableGitInfo: true
+enableRobotsTXT: true
+cleanDestinationDir: true
+disableHugoGeneratorInject: true
+defaultContentLanguage: en
+timeZone: Asia/Jakarta
+
+# Path configurations
+archetypeDir: docsite/archetypes
+assetDir: docsite/assets
+dataDir: docsite/data
+i18nDir: docsite/i18n
+layoutDir: docsite/layouts
+resourceDir: docsite/resources
+themesDir: docsite/themes
+contentDir: docsite/content
+publishDir: docsite/public
+staticDir: docsite/static
+
+languages:
+  en:
+    weight: 1
+    languageCode: en-US
+    languageName: English
+    contentDir: docsite/content
+    title: Detect Price by Photo
+    params:
+      description: Detect Price by Photo Documentation
+
+# To omit the Google Analytics script, put a ~ in place of the G-XXXXXXXXXX below.
+# Replace with your Google Analytics ID to enable Google Analytics.
+services:
+  googleAnalytics:
+    ID: ~
+
+params:
+  project:
+    # To omit the startYear, put a ~ in its place.
+    startYear: ~
+    presentYear: 2025
+    github:
+      repo: detect-price-by-photo/monorepo
+    themeColor:
+      light: '#ffffff'
+      dark: '#101010'
+
+  author:
+    name: Detect Price by Photo
+    url: https://github.com/detect-price-by-photo
+
+  home:
+    heading: Detect Price
+    headingSegment2: by Photo
+    description: Monorepo Documentation
+    getStartedPath: overview/
+
+markup:
+  highlight:
+    noClasses: false
+  goldmark:
+    renderer:
+      unsafe: true
+    parser:
+      attribute:
+        block: true
+        title: true
+

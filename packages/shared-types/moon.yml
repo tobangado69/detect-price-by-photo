@@ -1,0 +1,33 @@
+# Shared TypeScript types package
+# https://moonrepo.dev/docs/config/project
+
+language: 'typescript'
+type: 'library'
+
+# Task definitions
+tasks:
+  # Type check (if tsconfig.json exists)
+  typecheck:
+    command: 'tsc --noEmit'
+    inputs:
+      - '**/*.ts'
+    local: true
+  
+  # Lint
+  lint:
+    command: 'pnpm lint'
+    inputs:
+      - '**/*.ts'
+    local: true
+  
+  # Format
+  format:
+    command: 'pnpm format'
+    inputs:
+      - '**/*.ts'
+    local: true
+
+# Tags for dependency resolution
+tags:
+  - 'shared-types'
+

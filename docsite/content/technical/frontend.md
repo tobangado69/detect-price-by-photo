@@ -1,3 +1,8 @@
+---
+title: Frontend Architecture
+weight: 2
+---
+
 # Frontend Technical Notes
 
 ## 1. Repository Layout

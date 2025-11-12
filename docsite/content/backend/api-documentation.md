@@ -1,3 +1,8 @@
+---
+title: API Documentation
+weight: 1
+---
+
 # Detect Price by Photo - API Documentation
 
 **Base URL:** `http://localhost:8080` (development - Docker port mapping)  
@@ -486,11 +491,11 @@ Authorization: Bearer <access_token>
 
 ## User Management
 
-All endpoints require JWT authentication and are intended for authenticated/admin usage. Public self-service registration should use **POST `/api/v1/auth/signup`**.
+**⚠️ IMPORTANT: All `/api/v1/users/*` endpoints require admin role.** Regular users cannot access these endpoints. Public self-service registration should use **POST `/api/v1/auth/signup`**.
 
 ### Create User
 
-**POST** `/api/v1/users` *(Authenticated/Admin)*
+**POST** `/api/v1/users` *(Admin Only)*
 
 Create a new user account via the administrative API. Useful for back-office tooling.
 
@@ -525,13 +530,13 @@ Authorization: Bearer <access_token>
 
 ### List Users
 
-**GET** `/api/v1/users`
+**GET** `/api/v1/users` *(Admin Only)*
 
-List all users (with pagination and filters).
+List all users (with pagination and filters). Requires admin role.
 
 **Headers:**
 ```
-Authorization: Bearer <access_token>
+Authorization: Bearer <admin_access_token>
 ```
 
 **Query Parameters:**
@@ -560,13 +565,13 @@ Authorization: Bearer <access_token>
 
 ### Get User
 
-**GET** `/api/v1/users/:userId`
+**GET** `/api/v1/users/:userId` *(Admin Only)*
 
-Get user details by ID.
+Get user details by ID. Requires admin role.
 
 **Headers:**
 ```
-Authorization: Bearer <access_token>
+Authorization: Bearer <admin_access_token>
 ```
 
 **Path Parameters:**
@@ -587,13 +592,13 @@ Authorization: Bearer <access_token>
 
 ### Update User
 
-**PUT** `/api/v1/users/:userId`
+**PUT** `/api/v1/users/:userId` *(Admin Only)*
 
-Update user information.
+Update user information. Requires admin role.
 
 **Headers:**
 ```
-Authorization: Bearer <access_token>
+Authorization: Bearer <admin_access_token>
 ```
 
 **Path Parameters:**
@@ -616,13 +621,13 @@ Authorization: Bearer <access_token>
 
 ### Delete User
 
-**DELETE** `/api/v1/users/:userId`
+**DELETE** `/api/v1/users/:userId` *(Admin Only)*
 
-Delete a user account.
+Delete a user account. Requires admin role.
 
 **Headers:**
 ```
-Authorization: Bearer <access_token>
+Authorization: Bearer <admin_access_token>
 ```
 
 **Path Parameters:**

@@ -1,3 +1,8 @@
+---
+title: Forgot Password Guide
+weight: 2
+---
+
 # Forgot Password Workflow Guide
 
 ## Overview
@@ -56,7 +61,7 @@ This starts:
 #### Step 1: Request Password Reset
 
 ```bash
-curl -X POST http://localhost:9871/api/v1/auth/forgot-password \
+curl -X POST http://localhost:8080/api/v1/auth/forgot-password \
   -H "Content-Type: application/json" \
   -d '{
     "email": "rohimjoy70@gmail.com"
@@ -82,7 +87,7 @@ curl -X POST http://localhost:9871/api/v1/auth/forgot-password \
 #### Step 3: Reset Password
 
 ```bash
-curl -X POST http://localhost:9871/api/v1/auth/reset-password \
+curl -X POST http://localhost:8080/api/v1/auth/reset-password \
   -H "Content-Type: application/json" \
   -d '{
     "token": "PASTE_TOKEN_FROM_EMAIL_HERE",
@@ -107,7 +112,7 @@ curl -X POST http://localhost:9871/api/v1/auth/reset-password \
 #### Step 4: Login with New Password
 
 ```bash
-curl -X POST http://localhost:9871/api/v1/auth/signin/email \
+curl -X POST http://localhost:8080/api/v1/auth/signin/email \
   -H "Content-Type: application/json" \
   -d '{
     "email": "rohimjoy70@gmail.com",
@@ -210,7 +215,7 @@ APP_BASE_URL=http://localhost:5173  # Frontend URL for reset links
 
 ### Docker Compose
 
-MailHog is configured in `docker/docker-compose.yml`:
+MailHog is configured in `compose.yaml` (via `docker/_stacks_/mailpit.yaml`):
 
 ```yaml
 mailhog:
@@ -245,7 +250,7 @@ make mailhog-up
 
 **Check 2: Is Backend Connected to MailHog?**
 ```bash
-docker logs detect-price-backend-1 | grep "Mailer service initialized"
+docker compose -f compose.yaml logs backend | grep "Mailer service initialized"
 ```
 
 Should show:
@@ -255,7 +260,7 @@ Mailer service initialized host=mailhog port=1025
 
 If it shows `host=localhost`, restart backend:
 ```bash
-docker-compose -p detect-price -f docker/docker-compose.yml up -d backend
+docker compose -f compose.yaml up -d
 ```
 
 **Check 3: Check MailHog UI**
@@ -266,7 +271,7 @@ Open `http://localhost:8025` and see if emails are appearing.
 
 Tokens expire after **1 hour**. Request a new reset link:
 ```bash
-curl -X POST http://localhost:9871/api/v1/auth/forgot-password \
+curl -X POST http://localhost:8080/api/v1/auth/forgot-password \
   -H "Content-Type: application/json" \
   -d '{"email": "your@email.com"}'
 ```
@@ -326,7 +331,7 @@ Click "Clear" button in MailHog UI
 
 ### Check Backend Logs
 ```bash
-docker logs detect-price-backend-1 --tail 50 | grep -i "password\|email\|reset"
+docker compose -f compose.yaml logs backend --tail 50 | grep -i "password\|email\|reset"
 ```
 
 ### Query Database for Tokens

@@ -1,3 +1,8 @@
+---
+title: Admin Seed
+weight: 4
+---
+
 # Admin User Seed Data
 
 ## Overview
@@ -33,7 +38,7 @@ go run -tags debug cmd/main.go migrate:seed --force
 **Via Docker:**
 ```bash
 # Build and run the seeder in Docker
-docker compose -p detect-price -f docker/docker-compose.yml run --rm backend \
+docker compose -f compose.yaml run --rm backend \
   go run -tags debug cmd/main.go migrate:seed --force
 ```
 
@@ -43,7 +48,7 @@ If you prefer SQL or need to run it directly:
 
 ```bash
 # Connect to PostgreSQL
-docker compose -p detect-price -f docker/docker-compose.yml exec db psql -U postgres -d detect_price
+docker compose -f compose.yaml exec db psql -U postgres -d detect_price
 
 # Then run the SQL script
 \i /app/scripts/seed_admin.sql
@@ -51,7 +56,7 @@ docker compose -p detect-price -f docker/docker-compose.yml exec db psql -U post
 
 Or copy the SQL file and run it:
 ```bash
-docker compose -p detect-price -f docker/docker-compose.yml exec -T db psql -U postgres -d detect_price < apps/backend/scripts/seed_admin.sql
+docker compose -f compose.yaml exec -T db psql -U postgres -d detect_price < apps/backend/scripts/seed_admin.sql
 ```
 
 ### Option 3: Using the create_admin.go script

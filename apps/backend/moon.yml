@@ -1,0 +1,76 @@
+# Backend Go application configuration
+# https://moonrepo.dev/docs/config/project
+# Note: Moonrepo doesn't have native Go support, but we can still use it for task orchestration
+
+type: 'application'
+
+# Task definitions
+tasks:
+  # Run backend development server
+  dev:
+    command: 'go run ./cmd/ -- serve'
+    local: true
+    inputs:
+      - '**/*.go'
+      - 'go.mod'
+      - 'go.sum'
+    env:
+      DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/detect_price?sslmode=disable'
+      REDIS_URL: 'redis://localhost:6379'
+  
+  # Run backend tests
+  test:
+    command: 'go test ./...'
+    inputs:
+      - '**/*.go'
+      - '**/*_test.go'
+      - 'go.mod'
+      - 'go.sum'
+  
+  # Build backend binary
+  build:
+    command: 'go build -o bin/backend ./cmd/'
+    inputs:
+      - '**/*.go'
+      - 'go.mod'
+      - 'go.sum'
+    outputs:
+      - 'bin/backend'
+  
+  # Run database migrations
+  migrate:up:
+    command: 'go run ./cmd/ -- migrate:up'
+    local: true
+    inputs:
+      - 'internal/db/migrations/**/*.sql'
+      - 'cmd/**/*.go'
+  
+  migrate:down:
+    command: 'go run ./cmd/ -- migrate:down'
+    local: true
+  
+  migrate:reset:
+    command: 'go run ./cmd/ -- migrate:reset'
+    local: true
+  
+  # Seed database
+  seed:
+    command: 'go run ./cmd/ -- migrate:seed --force'
+    local: true
+  
+  # Lint Go code
+  lint:
+    command: 'golangci-lint run ./...'
+    inputs:
+      - '**/*.go'
+  
+  # Format Go code
+  format:
+    command: 'gofmt -w . && goimports -w .'
+    inputs:
+      - '**/*.go'
+
+# Dependencies (if backend depends on other projects)
+# dependsOn:
+#   - 'tag:shared-db'
+

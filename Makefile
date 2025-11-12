@@ -1,7 +1,7 @@
-COMPOSE_FILE := docker/docker-compose.yml
+COMPOSE_FILE := compose.yaml
 ENV_FILE := docker/.env.dev
-COMPOSE_PROJECT_NAME ?= detect-price
-COMPOSE := docker compose -p $(COMPOSE_PROJECT_NAME) -f $(COMPOSE_FILE) --env-file $(ENV_FILE)
+COMPOSE_PROJECT_NAME ?= detect-price-by-photo
+COMPOSE := docker compose -f $(COMPOSE_FILE) --env-file $(ENV_FILE)
 NETWORK := $(COMPOSE_PROJECT_NAME)_default
 DOCKER_ENV := MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL=*
 ROOT_DIR := $(shell pwd -W 2>/dev/null || pwd)
