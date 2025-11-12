@@ -1,0 +1,64 @@
+# Frontend React application configuration
+# https://moonrepo.dev/docs/config/project
+
+language: 'typescript'
+type: 'application'
+
+# Task definitions
+tasks:
+  # Run frontend development server
+  dev:
+    command: 'pnpm dev'
+    local: true
+    inputs:
+      - '**/*.{ts,tsx,js,jsx,css,html}'
+      - 'package.json'
+      - 'vite.config.ts'
+      - 'tsconfig.json'
+    env:
+      VITE_API_URL: 'http://localhost:8080'
+  
+  # Build frontend for production
+  build:
+    command: 'pnpm build'
+    inputs:
+      - '**/*.{ts,tsx,js,jsx,css,html}'
+      - 'package.json'
+      - 'vite.config.ts'
+      - 'tsconfig.json'
+    outputs:
+      - 'dist/**'
+  
+  # Run frontend tests
+  test:
+    command: 'pnpm test'
+    inputs:
+      - '**/*.{ts,tsx}'
+      - '**/*.test.{ts,tsx}'
+      - 'vitest.config.ts'
+  
+  # Type check TypeScript
+  typecheck:
+    command: 'pnpm typecheck'
+    inputs:
+      - '**/*.{ts,tsx}'
+      - 'tsconfig.json'
+  
+  # Lint frontend code
+  lint:
+    command: 'pnpm lint'
+    inputs:
+      - '**/*.{ts,tsx,js,jsx}'
+  
+  # Format frontend code
+  format:
+    command: 'pnpm format'
+    inputs:
+      - '**/*.{ts,tsx,js,jsx,json}'
+
+# Dependencies on shared packages
+# Note: Dependencies are managed via pnpm workspace, but Moonrepo can track them
+# dependsOn:
+#   - 'tag:shared-types'
+#   - 'tag:shared-utils'
+

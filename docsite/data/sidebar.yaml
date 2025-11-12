@@ -1,0 +1,31 @@
+pages:
+  - title: Overview
+
+groups:
+  - title: Getting Started
+    pages:
+      - title: Overview
+  - title: Backend
+    pages:
+      - title: Project Structure
+      - title: Configuration
+      - title: API Documentation
+      - title: Forgot Password Guide
+      - title: Database Setup
+      - title: Admin Seed
+  - title: Integration
+    pages:
+      - title: Midtrans Setup
+  - title: Product Requirements
+    pages:
+      - title: Overview
+      - title: Backend PRD
+      - title: Frontend PRD
+  - title: Technical Documentation
+    pages:
+      - title: Backend Architecture
+      - title: Frontend Architecture
+  - title: Reference
+    pages:
+      - title: FAQ
+      - title: Troubleshooting
