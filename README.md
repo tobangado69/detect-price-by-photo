@@ -178,23 +178,23 @@ moon task-graph
 ```
 .
 ├── apps/
-│   ├── backend/          # Go backend application
-│   │   └── moon.yml      # Moonrepo config
-│   └── frontend/         # React frontend application
-│       └── moon.yml      # Moonrepo config
+│   ├── backend/           # Go REST API service
+│   ├── frontend/          # React + Vite web application
+│   └── ai-service/        # Go-based AI embedding/estimation worker
 ├── packages/
-│   ├── shared-types/     # Shared TypeScript types
-│   │   └── moon.yml
-│   ├── shared-utils/     # Shared utilities
-│   │   └── moon.yml
-│   └── shared-db/        # Shared database migrations
-├── .moon/
-│   ├── workspace.yml     # Moonrepo workspace config
-│   ├── toolchain.yml     # Moonrepo toolchain config
-│   └── tasks.yml         # Moonrepo global tasks
-├── compose.yaml          # Root Docker Compose file
-├── pnpm-workspace.yaml   # PNPM workspace config
-└── package.json          # Root package.json with scripts
+│   ├── shared-types/      # Shared TypeScript contracts
+│   ├── shared-utils/      # Shared TypeScript utilities
+│   ├── shared-db/         # Shared SQL migrations & seeds
+│   └── ai-knowledge/      # AI datasets and knowledge base
+├── docsite/               # Hugo-powered documentation site
+├── docker/                # Dockerfiles, Compose stacks, infra configs
+├── specs/                 # Spec-Driven Development artefacts & roadmaps
+├── .moon/                 # Moonrepo workspace configuration
+├── compose.yaml           # Root Docker Compose entrypoint
+├── hugo.yaml              # Hugo documentation configuration
+├── go.mod / go.sum        # Go module root config
+├── package.json           # Root pnpm scripts and metadata
+└── pnpm-workspace.yaml    # pnpm workspace definition
 ```
 
 ## Benefits of Moonrepo
