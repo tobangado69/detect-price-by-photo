@@ -9,6 +9,8 @@ This workspace contains:
 
 Powered by [Moonrepo](https://moonrepo.dev/docs/install) for task orchestration and **pnpm** for dependency management.
 
+**Source:** Forked from [zero-one-group/monorepo](https://github.com/zero-one-group/monorepo).
+
 **Documentation:** Full documentation is available in the [docsite](/docsite/) directory. To view locally, run `hugo server` from the project root.
 
 ## Prerequisites
