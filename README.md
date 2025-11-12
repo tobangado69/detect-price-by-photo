@@ -42,26 +42,34 @@ Powered by [Moonrepo](https://moonrepo.dev/docs/install) for task orchestration 
    pnpm install
    ```
 
-4. **Sync Moonrepo projects**
+4. **Configure environment variables**
+   ```sh
+   # Copy example file and fill in your API keys
+   cp docker/.env.example docker/.env.dev
+   # Edit docker/.env.dev with your actual credentials
+   # REQUIRED: Set MIDTRANS_SERVER_KEY, MIDTRANS_CLIENT_KEY, JWT_SECRET_KEY
+   ```
+
+5. **Sync Moonrepo projects**
    ```sh
    pnpm moon:sync
    ```
 
-5. **Start the backend**
+6. **Start the backend**
    ```sh
    pnpm dev:backend
    # Or using Moonrepo directly:
    moon run backend:dev
    ```
 
-6. **Start the web app**
+7. **Start the web app**
    ```sh
    pnpm dev:frontend
    # Or using Moonrepo directly:
    moon run frontend:dev
    ```
 
-7. **Bring up infrastructure**
+8. **Bring up infrastructure**
    ```sh
    pnpm compose:up
    ```
